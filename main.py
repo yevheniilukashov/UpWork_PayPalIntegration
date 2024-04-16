@@ -105,6 +105,22 @@ def create_subscription(plan_id, return_url, cancel_url):
     return response.json()['links'][0]['href'], response.json()['id']
 
 
+def update_subscription(subscription_id, new_price):
+    url = f"https://api-m.sandbox.paypal.com/v1/billing/subscriptions/{subscription_id}"
+    payload = json.dumps([
+        {
+            "op": "replace",
+            "path": "/plan/billing_cycles/@sequence==1/pricing_scheme/fixed_price",
+            "value": {
+                "currency_code": "USD",
+                "value": f"{new_price}"
+            }
+        }
+    ])
+    response = requests.request("PATCH", url, headers=headers, data=payload)
+    return response.text
+
+
 def change_status_subscription(subscription_id, status="activate"):
     url = f"https://api-m.sandbox.paypal.com/v1/billing/subscriptions/{subscription_id}/{status}"
 
@@ -133,6 +149,7 @@ print(sub_details.json()['status'])
 print(subscription_link)
 # Check sub_detais['status'] == 'Active' to be sure sub is paid,
 # there are also many different fiends in object to track the payments
+update_subscription(subscription_id, 99)
 change_status_subscription(subscription_id, "suspend")  # suspend the sub ||
 # To test this you should put a breakpoint and proceed with payment
 # (suspend/activate/cansel are statuses)
